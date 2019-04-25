@@ -22,14 +22,14 @@ class Place (object):
         self.date = datetime.date(datetime.MINYEAR, 1, 1) # ?????
         self.isFinal = final
 
-    def addToken(self):
+    def add_token(self):
         self.tokens = self.tokens + 1
 
-    def removeToken(self):
+    def remove_token(self):
         self.tokens = self.tokens - 1
 
-    def setDate(self, timestamp):
-        self.date = datetime.date.fromtimestamp(timestamp)
+    def set_date(self, timestamp):
+        self.date = datetime.datetime.strptime(timestamp, "%d.%m.%y")
 
 
 class Transition (object):
@@ -49,10 +49,14 @@ class Transition (object):
         self.name = str(name)
         self.inArcs = {}
         self.outArcs = {}
+        self.legalFires = fires
         self.firingCounter = fires
         self.maxTime = datetime.timedelta(days=maxtime)
         self.weight = weight
         self.hidden = hidden
+
+    def fire(self):
+        self.firingCounter = self.firingCounter - 1
 
 
 class AttributePetriNet (object):
@@ -61,7 +65,7 @@ class AttributePetriNet (object):
         self.finishPlace = Place("final", True)
         self.places = {
             "start": self.startPlace,
-            "finish": self.finishPlace
+            "final": self.finishPlace
         }
         self.transitions = {}
 
