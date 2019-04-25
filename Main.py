@@ -160,20 +160,20 @@ def main():
     log_by_trace = _preprocess(evlog)
 
     # Инициализация модели
-    net = pnet.AttributePetriNet()
-    _create_net(net, matcher)
+    # Нахождение значения conformance
 
-    trace_1_replayer = replayer.TokenRaplay(net, matcher)
-    trace_1_replayer.replay_log(log_by_trace[1])
-    conformance_value = trace_1_replayer.get_conformance()
-    print(conformance_value)
+    for trace in log_by_trace.keys():
+        net = pnet.AttributePetriNet()
+        _create_net(net, matcher)
+        trace_replayer = replayer.TokenRaplay(net, matcher)
+        trace_replayer.replay_log(log_by_trace[trace])
+        conformance_value = trace_replayer.get_conformance()
+        log_by_trace[trace]['conformance'] = conformance_value
+        print(conformance_value)
 
-    net = pnet.AttributePetriNet()
-    _create_net(net, matcher)
-    trace_2_replayer = replayer.TokenRaplay(net, matcher)
-    trace_2_replayer.replay_log(log_by_trace[2])
-    conformance_value = trace_2_replayer.get_conformance()
-    print(conformance_value)
+    result_log = pd.concat(log_by_trace.values())
+    result_log.to_csv("result.csv", sep=';', index=False, encoding='mac_cyrillic')
+
     return
 
 
