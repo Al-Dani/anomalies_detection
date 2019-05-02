@@ -14,7 +14,7 @@ def _is_loop(transition):
 
 
 def _check_time(place, transition, event_time):
-    if dt.datetime.strptime(event_time, "%d.%m.%Y").date() - place.date <= transition.maxTime:  #ToDO:пофиксить даты в hidden
+    if event_time - place.date <= transition.maxTime:  #ToDO:пофиксить даты в hidden
         return 1
     return 0.5
 
@@ -22,7 +22,7 @@ def _check_time(place, transition, event_time):
 def _check_fires(transition):
     if transition.firingCounter <= transition.legalFires:
         return 1.0
-    return transition.firingCounter/transition.legalFires
+    return transition.legalFires/transition.firingCounter
 
 
 def _get_hidden(place):
@@ -52,8 +52,7 @@ class TokenRaplay(object):
     def replay_log(self, tracelog):
         current_model_position = self.net.startPlace
         row_counter = 0
-        current_model_position.date = \
-            dt.datetime.strptime(tracelog.iloc[row_counter]['event_date'], "%d.%m.%Y").date()
+        current_model_position.date = tracelog.iloc[row_counter]['event_date']
 
         while current_model_position != self.net.finishPlace and row_counter < tracelog.shape[0]:
             current_event = tracelog.iloc[row_counter]['event_type']
@@ -92,7 +91,7 @@ class TokenRaplay(object):
             place.add_token()
             self.produced = self.produced + 1
             if not transition.hidden and place.date == dt.date(dt.MINYEAR, 1, 1):
-                place.date = dt.datetime.strptime(event_time, "%d.%m.%Y").date()
+                place.date = event_time
             if transition.hidden:
                 place.date = transition.inArcs[next(iter(transition.inArcs))].date
             self.marking.append(place)

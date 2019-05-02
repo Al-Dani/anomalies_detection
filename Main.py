@@ -17,12 +17,17 @@ import AttributePNet as pnet
 import TokenReplay as replayer
 
 import pandas as pd
+import datetime as dt
 
 MAX_INT = 100000
 
 
+def _convert_time(time_str):
+    return dt.datetime.strptime(time_str, "%d.%m.%Y").date()
+
 def _preprocess(evlog):
-    evlog = evlog.sort_values(by='UNIQ_ID')
+    evlog['event_date'] = evlog['event_date'].apply(_convert_time)
+
     caseIds = evlog.UNIQ_ID.unique()
     logsDict = {elem: pd.DataFrame for elem in caseIds}
 
@@ -76,7 +81,7 @@ def _create_net(attribute_petri_net, matcher):
     attribute_petri_net.addTransition('t6.2.1', 1, 100, False, 0.8)
     attribute_petri_net.addTransition('t7.1', 1, 100, False, 1)
     attribute_petri_net.addTransition('t7.2', 1, 100, False, 0.8)
-    attribute_petri_net.addTransition('t8.1', 1, 100, True, 1)
+    attribute_petri_net.addTransition('t8.1', 1, 100, False, 1)
     attribute_petri_net.addTransition('t9.1', MAX_INT, 100, False, 1)
     attribute_petri_net.addTransition('t9.2', 1, 100, False, 0.8)
 
@@ -156,7 +161,7 @@ def main():
     matcher = match.Matcher()
 
     # Препроцессинг
-    evlog = pd.read_csv("trial_log.csv", sep=';')
+    evlog = pd.read_csv("trial_log2.csv", sep=';')
     log_by_trace = _preprocess(evlog)
 
     # Инициализация модели
@@ -167,15 +172,15 @@ def main():
         _create_net(net, matcher)
         trace_replayer = replayer.TokenRaplay(net, matcher)
         trace_replayer.replay_log(log_by_trace[trace])
-        conformance_value = trace_replayer.get_conformance()
+        conformance_value = format(trace_replayer.get_conformance(), '.3f')
         log_by_trace[trace]['conformance'] = conformance_value
         print(conformance_value)
 
     result_log = pd.concat(log_by_trace.values())
-    result_log.to_csv("result.csv", sep=';', index=False, encoding='mac_cyrillic')
+    result_log.to_csv("result2.csv", sep=';', index=False, encoding='mac_cyrillic')
 
     return
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     main()
