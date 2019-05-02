@@ -50,13 +50,13 @@ class Transition (object):
         self.inArcs = {}
         self.outArcs = {}
         self.legalFires = fires
-        self.firingCounter = fires
+        self.firingCounter = 0
         self.maxTime = datetime.timedelta(days=maxtime)
         self.weight = weight
         self.hidden = hidden
 
     def fire(self):
-        self.firingCounter = self.firingCounter - 1
+        self.firingCounter = self.firingCounter + 1
 
 
 class AttributePetriNet (object):
