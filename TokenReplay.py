@@ -13,12 +13,6 @@ def _is_loop(transition):
     return next(iter(transition.inArcs)) == next(iter(transition.outArcs))
 
 
-def _check_time(place, transition, event_time):
-    if event_time - place.date <= transition.maxTime:  #ToDO:пофиксить даты в hidden
-        return 1
-    return 0.5
-
-
 def _check_fires(transition):
     if transition.firingCounter <= transition.legalFires:
         return 1.0
@@ -61,22 +55,24 @@ class TokenRaplay(object):
 
             if current_log_event in current_model_position.outArcs:
                 current_transition = current_model_position.outArcs[current_log_event]
-                if _check_inArcs(current_transition):  #TODO: add missing token
+                if _check_inArcs(current_transition):
                     event_time = tracelog.iloc[row_counter]['event_date']
+                    self.__check_time(current_model_position, current_transition, event_time)
                     self.__fire_token(current_transition, event_time)
-                    self.__get_weight(current_model_position, current_transition, event_time)
+                    self.__get_weight(current_transition)
                     row_counter = row_counter + 1
             else:
                 list_hidden = _get_hidden(current_model_position)
                 if len(list_hidden) == 1:
                     self.__fire_token(list_hidden[next(iter(list_hidden))], 0)
                 else:
-                    for key, transition in list_hidden.items():  #TODO:обработать ситуацию с несколькими возможными hidden
+                    for key, transition in list_hidden.items():
                         if not _is_loop(transition):
                             self.__fire_token(transition)
             current_model_position = self.marking[0]
 
     def get_conformance(self):
+        self.__check_remain()
         cost = self.__is_complete() * self.weight / self.count_transitions
         conformance = 0.5 * cost * (2 - self.miss/self.consumed + self.remain/self.produced)
         return conformance
@@ -100,11 +96,20 @@ class TokenRaplay(object):
             self.count_transitions = self.count_transitions + 1
         transition.fire()
 
-    def __get_weight(self, place, transition, event_time):
-        self.weight = self.weight + _check_time(place, transition, event_time) \
-                      * _check_fires(transition) * transition.weight
+    def __get_weight(self, transition):
+        self.weight = self.weight + _check_fires(transition) * transition.weight
 
     def __is_complete(self):
         if self.marking[0].isFinal:
             return 1
         return -1
+
+    def __check_time(self, place, transition, event_time):
+        if event_time - place.date > transition.maxTime:  # ToDO:пофиксить даты в hidden
+            self.miss = self.miss + 1
+            place.add_token()
+
+    def __check_remain(self):
+        for key, place in self.net.places.items():
+            if place.tokens > 0 and not place.isFinal:
+                self.remain = self.remain + 1
