@@ -1,20 +1,20 @@
 import datetime
 
 class Place (object):
-    '''!
+    """!
     Class to represent a place in a Petri Net
     Tokens are represented by Integer values
     input and output arcs are represented as sets of possible transitions
     date attribute refers to a timestamp - дата первого перехода в позицию --- ЗАЧЕМ ТУТ??
     isFinal - specify if this place can be final
-    '''
+    """
     def __init__(self, name, final, tokens=0):
-        '''!
+        """!
             Constructor method.
 
             @param name: name of the place
             @param final: specify if this place can be final
-        '''
+        """
         self.name = str(name)
         self.tokens = tokens
         self.inArcs = {}
@@ -33,19 +33,19 @@ class Place (object):
 
 
 class Transition (object):
-    '''!
+    """!
     Class to represent a transition ib a Petri Net
-    '''
+    """
 
     def __init__(self, name, fires, maxtime, hidden, weight=1):
-        '''!
+        """!
                 Constructor method.
 
                 @param name: name of the transition
                 @param fires: legal number of firing for the transition
                 @param maxtime: legal gap before transition firing
                 @param weight: penalty for transition firing
-        '''
+        """
         self.name = str(name)
         self.inArcs = {}
         self.outArcs = {}
@@ -78,18 +78,18 @@ class AttributePetriNet (object):
         self.transitions[name] = newTransition
 
     def addInputArc(self, placeName, transitionName):
-        '''!
+        """!
                 Method that add arcs from place to transition
-        '''
+        """
         currentPlace = self.places[placeName]
         currentTransition = self.transitions[transitionName]
         currentPlace.outArcs[transitionName] = currentTransition
         currentTransition.inArcs[placeName] = currentPlace
 
     def addOutputArc(self, transitionName, placeName):
-        '''!
+        """!
                 Method that add arcs from transitions to places
-        '''
+        """
         currentPlace = self.places[placeName]
         currentTransition = self.transitions[transitionName]
         currentPlace.inArcs[transitionName] = currentTransition
