@@ -49,3 +49,6 @@ class Matcher(object):
 
     def get_trans_to_symb(self):
         return self.transitions_to_symbols
+
+    def get_symbols_to_trans(self):
+        return self.symbols_to_transitions

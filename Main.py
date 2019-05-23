@@ -15,6 +15,7 @@
 import EventsMatcher as match
 import AttributePNet as pnet
 import TokenReplay as replayer
+import Clusterizator as cluster
 
 import pandas as pd
 import datetime as dt
@@ -211,7 +212,9 @@ def main():
     evlog = pd.read_csv("trial_log4.csv", sep=';', encoding='mac_cyrillic')
     log_by_trace = _preprocess(evlog)
 
+    # anomaly traces in a view of symbol strings
     list_of_traces = []
+    anomaly_traces = {}
 
     # Инициализация модели
     # Нахождение значения conformance
@@ -231,12 +234,17 @@ def main():
             word = trace_replayer.get_bag_of_transitions()
             word_with_cycle = _find_cycle(word)
             list_of_traces.append(word_with_cycle)
+            anomaly_traces[trace] = word_with_cycle
             print(word_with_cycle)
 
     result_log = pd.concat(log_by_trace.values())
     result_log.to_csv("result4.csv", sep=';', index=False, encoding='mac_cyrillic')
 
-    print(list_of_traces)
+    decoder = matcher.get_symbols_to_trans()
+    print(decoder)
+
+    anomaly_cluster = cluster.cluster(anomaly_traces, list_of_traces)
+    print(anomaly_cluster)
 
     return
 
