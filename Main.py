@@ -116,7 +116,7 @@ def _create_net(attribute_petri_net, matcher):
     attribute_petri_net.addTransition('t6.1', 1, cnst.MAX_INT, False, 1)  # дело приостановлено
     attribute_petri_net.addTransition('t6.2', 1, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t6.3', 3, cnst.MAX_INT, False, 1)
-    attribute_petri_net.addTransition('t6.4', 1, cnst.MAX_INT, False, 1)
+    attribute_petri_net.addTransition('t6.4', 1, cnst.MAX_INT, False, 1)  #передать дело
     attribute_petri_net.addTransition('t6.5', 1, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t6.3.1', 2, 100, False, 1)
     attribute_petri_net.addTransition('t7.0', 1, cnst.MAX_INT, False, 1)  # дело частного обвинения
@@ -208,7 +208,7 @@ def main():
     print(trans_list)
 
     # Препроцессинг
-    evlog = pd.read_csv("trial_log3.csv", sep=';', encoding='mac_cyrillic')
+    evlog = pd.read_csv("trial_log4.csv", sep=';', encoding='mac_cyrillic')
     log_by_trace = _preprocess(evlog)
 
     list_of_traces = []
@@ -234,7 +234,9 @@ def main():
             print(word_with_cycle)
 
     result_log = pd.concat(log_by_trace.values())
-    result_log.to_csv("result3.csv", sep=';', index=False, encoding='mac_cyrillic')
+    result_log.to_csv("result4.csv", sep=';', index=False, encoding='mac_cyrillic')
+
+    print(list_of_traces)
 
     return
 

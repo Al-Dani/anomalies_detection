@@ -84,6 +84,24 @@ class TokenReplay(object):
                 list_hidden = _get_hidden(current_model_position)
                 if len(list_hidden) == 1:
                     self.__fire_token(list_hidden[next(iter(list_hidden))], 0)
+                elif len(list_hidden) > 1:
+                    count_loop = 0
+                    for key, transition in list_hidden.items():
+                        if _is_loop(transition):
+                            count_loop = count_loop + 1
+                    if len(list_hidden) - count_loop > 1:
+                        current_transition = self.net.transitions[current_log_event]
+                        self.bag_of_transitions = self.bag_of_transitions + \
+                                                  self.matcher.transition_to_symbol(current_transition.name)
+                        current_model_position.remove_token()
+                        self.marking.remove(current_model_position)
+                        self.__fire_hidden(current_transition)
+                        row_counter = row_counter + 1
+                    else:
+                        for key, transition in list_hidden.items():
+                            if not _is_loop(transition):
+                                self.__fire_token(transition, 0)
+
                 elif len(list_hidden) == 0:
                     current_transition = self.net.transitions[current_log_event]
                     self.bag_of_transitions = self.bag_of_transitions + cnst.SYMBOL_BAD + \
@@ -92,12 +110,8 @@ class TokenReplay(object):
                     self.__fire_missing(current_transition)
 
                     self.marking.clear()  # assume that in one time only one place in marking
-                    self.marking.append(current_model_position)  # we still in the same transition
+                    self.marking.append(current_model_position)  # we still in the same position
                     row_counter = row_counter + 1
-                else:
-                    for key, transition in list_hidden.items():
-                        if not _is_loop(transition):
-                            self.__fire_token(transition)
             current_model_position = self.marking[0]
 
     def get_conformance(self):
@@ -143,6 +157,19 @@ class TokenReplay(object):
         for key, place in transition.outArcs.items():
             place.add_token()
             self.produced = self.produced + 1
+
+        if not transition.hidden:
+            self.count_transitions = self.count_transitions + 1
+        transition.fire()
+
+    def __fire_hidden(self, transition):
+        for key, place in transition.inArcs.items():
+            self.consumed = self.consumed + 1
+
+        for key, place in transition.outArcs.items():
+            place.add_token()
+            self.produced = self.produced + 1
+            self.marking.append(place)
 
         if not transition.hidden:
             self.count_transitions = self.count_transitions + 1

@@ -6,9 +6,7 @@ class Matcher(object):
         df = pd.read_csv("events_to_transitions 2.csv", sep=';')
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         event_list = df['event'].tolist()
-        # event_list = map(str.strip, event_list)
         transition_id_list = df['transition_id'].tolist()
-        # ctransition_id_list = map(str.strip, transition_id_list)
 
         self.events_to_transitions = dict(zip(event_list, transition_id_list))
         self.transition_id = (list(set(transition_id_list)))
