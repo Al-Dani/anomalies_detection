@@ -9,6 +9,7 @@ class Matcher(object):
         transition_id_list = df['transition_id'].tolist()
 
         self.events_to_transitions = dict(zip(event_list, transition_id_list))
+        self.trans_to_ev = dict(zip(transition_id_list, event_list))
         self.transition_id = (list(set(transition_id_list)))
         self.transitions_to_symbols = {}
 
@@ -52,3 +53,6 @@ class Matcher(object):
 
     def get_symbols_to_trans(self):
         return self.symbols_to_transitions
+
+    def decode_transitions(self):
+        return self.trans_to_ev

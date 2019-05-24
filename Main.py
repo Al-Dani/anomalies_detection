@@ -20,6 +20,7 @@ import Clusterizator as cluster
 import pandas as pd
 import datetime as dt
 import Constants as cnst
+import json
 
 
 def _convert_time(time_str):
@@ -245,6 +246,18 @@ def main():
 
     anomaly_cluster = cluster.cluster(anomaly_traces, list_of_traces)
     print(anomaly_cluster)
+
+    anomaly_cluster.to_csv("clusters.csv", sep=';', index=False)
+    json_decoder = json.dumps(decoder)
+    f = open("decoder.json", "w")
+    f.write(json_decoder)
+    f.close()
+
+    events = matcher.decode_transitions()
+    events_json = json.dumps(events, ensure_ascii=False)
+    f = open("events.json", "w")
+    f.write(events_json)
+    f.close()
 
     return
 
