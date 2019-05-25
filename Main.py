@@ -242,6 +242,8 @@ def main():
     result_log.to_csv("result4.csv", sep=';', index=False, encoding='mac_cyrillic')
 
     decoder = matcher.get_symbols_to_trans()
+    # decoder = {key:val for key, val in decoder.items() if val != float('nan')}
+    del decoder['a']
     print(decoder)
 
     anomaly_cluster = cluster.cluster(anomaly_traces, list_of_traces)

@@ -7,9 +7,10 @@ class Matcher(object):
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         event_list = df['event'].tolist()
         transition_id_list = df['transition_id'].tolist()
+        transition_names = df['transition_name'].tolist()
 
         self.events_to_transitions = dict(zip(event_list, transition_id_list))
-        self.trans_to_ev = dict(zip(transition_id_list, event_list))
+        self.trans_to_ev = dict(zip(transition_id_list, transition_names))
         self.transition_id = (list(set(transition_id_list)))
         self.transitions_to_symbols = {}
 
