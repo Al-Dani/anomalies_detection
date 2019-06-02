@@ -1,16 +1,5 @@
-'''!
-    log preprocessing - DONE
-    |
-    model initialization - DONE
-    |
-    for each trace get conformance value - DONE
-    |
-    filter anomaly traces - DONE
-    |
-    classify anomaly traces
-    |
-    return .csv / .json for further visualization
-'''
+#!/usr/bin/python
+import sys
 
 import EventsMatcher as match
 import AttributePNet as pnet
@@ -111,14 +100,14 @@ def _create_net(attribute_petri_net, matcher):
     attribute_petri_net.addTransition('t5.0', 1, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t5.1.1', 1, cnst.MAX_INT, True, 1)  # no
     attribute_petri_net.addTransition('t5.1.2', 1, cnst.MAX_INT, True, 1)  # no
-    attribute_petri_net.addTransition('t5.2', 10, cnst.MAX_INT, False, 1)
+    attribute_petri_net.addTransition('t5.2', 10, cnst.MAX_INT, False, 0.8)
     attribute_petri_net.addTransition('t5.3', 1, 30, True, 1)
     attribute_petri_net.addTransition('t5.4', 1, cnst.MAX_INT, True, 1)
     attribute_petri_net.addTransition('t6.0', cnst.MAX_INT, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t6.1', 1, cnst.MAX_INT, False, 1)  # дело приостановлено
     attribute_petri_net.addTransition('t6.2', 1, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t6.3', 3, cnst.MAX_INT, False, 1)
-    attribute_petri_net.addTransition('t6.4', 1, cnst.MAX_INT, False, 1)  #передать дело
+    attribute_petri_net.addTransition('t6.4', 1, cnst.MAX_INT, False, 1)  # передать дело
     attribute_petri_net.addTransition('t6.5', 1, cnst.MAX_INT, False, 1)
     attribute_petri_net.addTransition('t6.3.1', 2, 100, False, 1)
     attribute_petri_net.addTransition('t7.0', 1, cnst.MAX_INT, False, 1)  # дело частного обвинения
@@ -203,63 +192,70 @@ def _create_net(attribute_petri_net, matcher):
 
 
 def main():
-    matcher = match.Matcher()
+    log_file = sys.argv[1]
+    matcher_file = sys.argv[2]
 
-    trans_list = matcher.get_trans_to_symb()
-    print("символьные соответствия:")
-    print(trans_list)
+    try:
+        matcher = match.Matcher(matcher_file)
+
+        trans_list = matcher.get_trans_to_symb()
 
     # Препроцессинг
-    evlog = pd.read_csv("trial_log4.csv", sep=';', encoding='mac_cyrillic')
-    log_by_trace = _preprocess(evlog)
 
-    # anomaly traces in a view of symbol strings
-    list_of_traces = []
-    anomaly_traces = {}
+        evlog = pd.read_csv(log_file, sep=';', encoding='mac_cyrillic')
+        log_by_trace = _preprocess(evlog)
 
-    # Инициализация модели
-    # Нахождение значения conformance
+        # anomaly traces in a view of symbol strings
+        list_of_traces = []
+        anomaly_traces = {}
 
-    for trace in log_by_trace.keys():
-        net = pnet.AttributePetriNet()
-        _create_net(net, matcher)
-        trace_replayer = replayer.TokenReplay(net, matcher)
-        trace_replayer.replay_log(log_by_trace[trace])
+        # Инициализация модели
+        # Нахождение значения conformance
 
-        conformance = trace_replayer.get_conformance()
-        conformance_value = format(conformance, '.3f')
-        log_by_trace[trace]['conformance'] = conformance_value
-        print(conformance_value)
+        for trace in log_by_trace.keys():
+            net = pnet.AttributePetriNet()
+            _create_net(net, matcher)
+            trace_replayer = replayer.TokenReplay(net, matcher)
+            trace_replayer.replay_log(log_by_trace[trace])
 
-        if conformance < 1:
-            word = trace_replayer.get_bag_of_transitions()
-            word_with_cycle = _find_cycle(word)
-            list_of_traces.append(word_with_cycle)
-            anomaly_traces[trace] = word_with_cycle
-            print(word_with_cycle)
+            conformance = trace_replayer.get_conformance()
+            conformance_value = format(conformance, '.3f')
+            log_by_trace[trace]['conformance'] = conformance_value
 
-    result_log = pd.concat(log_by_trace.values())
-    result_log.to_csv("result4.csv", sep=';', index=False, encoding='mac_cyrillic')
+            if conformance < 1:
+                word = trace_replayer.get_bag_of_transitions()
+                word_with_cycle = _find_cycle(word)
+                list_of_traces.append(word_with_cycle)
+                anomaly_traces[trace] = word_with_cycle
 
-    decoder = matcher.get_symbols_to_trans()
-    # decoder = {key:val for key, val in decoder.items() if val != float('nan')}
-    del decoder['a']
-    print(decoder)
+        result_log = pd.concat(log_by_trace.values())
+        result_log.to_csv("result4.csv", sep=';', index=False, encoding='mac_cyrillic')
 
-    anomaly_cluster = cluster.cluster(anomaly_traces, list_of_traces)
-    print(anomaly_cluster)
+        decoder = matcher.get_symbols_to_trans()
+        del decoder['a']
 
-    anomaly_cluster.to_csv("clusters.csv", sep=';', index=False)
-    json_decoder = json.dumps(decoder)
-    f = open("decoder.json", "w")
-    f.write(json_decoder)
-    f.close()
+        anomaly_cluster = cluster.cluster(anomaly_traces, list_of_traces)
 
-    events = matcher.decode_transitions()
-    events_json = json.dumps(events, ensure_ascii=False)
-    f = open("events.json", "w")
-    f.write(events_json)
-    f.close()
+        anomaly_cluster.to_csv("clusters.csv", sep=';', index=False)
+        json_decoder = json.dumps(decoder)
+        f = open("decoder.json", "w")
+        f.write(json_decoder)
+        f.close()
+
+        events = matcher.decode_transitions()
+        bad_keys = list(filter(lambda x: not isinstance(x, str), events.keys()))
+        for bad_key in bad_keys:
+            del events[bad_key]
+        events_json = json.dumps(events, ensure_ascii=False)
+        f = open("events.json", "w")
+        f.write(events_json)
+        f.close()
+
+        print("Выполнение поиска аномалий успешно завершено")
+        print("Отчеты по выполнению содержатся в файлах 'result.csv' и 'clusters.csv'")
+
+    except:
+        print("err: Невозможно прочитать входной файл")
 
     return
 
