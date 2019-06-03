@@ -28,6 +28,12 @@ def _preprocess(evlog):
     return logsDict
 
 
+def _clear_word(word):
+    word = word.replace(cnst.SYMBOL_TIME + cnst.SYMBOL_LOOP_START, cnst.SYMBOL_LOOP_START)
+    word = word.replace(cnst.SYMBOL_BAD + cnst.SYMBOL_LOOP_START, cnst.SYMBOL_LOOP_START)
+    return word
+
+
 def _find_cycle(word):
     if len(word) < 4:
         return word
@@ -225,6 +231,7 @@ def main():
             if conformance < 1:
                 word = trace_replayer.get_bag_of_transitions()
                 word_with_cycle = _find_cycle(word)
+                word_with_cycle = _clear_word(word_with_cycle)
                 list_of_traces.append(word_with_cycle)
                 anomaly_traces[trace] = word_with_cycle
 
